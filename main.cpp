@@ -31,7 +31,7 @@ int main()
             0
     };
 
-    const int nebula_size = 5;
+    const int nebula_size = 2;
     Anim nebulae[nebula_size];
     for (int i = 0; i < nebula_size; i++)
     {
@@ -64,6 +64,17 @@ int main()
     const int jumpForce = 600;
     bool isInAir = false;
 
+    Texture2D background = LoadTexture("../textures/far-buildings.png");
+    Texture2D midground = LoadTexture("../textures/back-buildings.png");
+    Texture2D foreground = LoadTexture("../textures/foreground.png");
+
+    float bgX{};
+    float mgX{};
+    float fgX{};
+
+    float finishLine = nebulae[nebula_size - 1].Pos.x + 400;
+    bool collision{};
+
     SetTargetFPS(60);
     while (!WindowShouldClose())
     {
@@ -71,6 +82,41 @@ int main()
 
         BeginDrawing();
         ClearBackground(WHITE);
+
+
+        //drawing background
+        bgX -= 20 * deltaTime;
+        if (bgX <= -background.width * 2)
+        {
+            bgX = 0;
+        }
+        Vector2 bg1Pos{bgX, 0.0};
+        DrawTextureEx(background, bg1Pos, 0.0, 2.0, WHITE);
+        Vector2 bg2Pos{bgX + background.width * 2, 0.0};
+        DrawTextureEx(background, bg2Pos, 0.0, 2.0, WHITE);
+
+        mgX -= 40 * deltaTime;
+        fgX -= 80 * deltaTime;
+
+        if (mgX <= -midground.width * 2)
+        {
+            mgX = 0;
+        }
+
+        Vector2 mg1Pos{bgX, 0.0};
+        DrawTextureEx(midground, mg1Pos, 0.0, 2.0, WHITE);
+        Vector2 mg2Pos{bgX + midground.width * 2, 0.0};
+        DrawTextureEx(midground, mg2Pos, 0.0, 2.0, WHITE);
+
+        if (fgX <= -foreground.width * 2)
+        {
+            mgX = 0;
+        }
+
+        Vector2 fgPos1{bgX, 0.0};
+        DrawTextureEx(foreground, fgPos1, 0.0, 2.0, WHITE);
+        Vector2 fgPos2{bgX + foreground.width * 2, 0.0};
+        DrawTextureEx(foreground, fgPos2, 0.0, 2.0, WHITE);
 
         // ground check
         if (IsScarfyOnTheGround(window, scarfyData))
@@ -94,6 +140,8 @@ int main()
             nebulaData.Pos.x += nebulaVelocity * deltaTime;
         }
 
+        finishLine += nebulaVelocity * deltaTime;
+
         scarfyData.Pos.y += deltaTime * velocity;
 
         if (!isInAir)
@@ -107,19 +155,58 @@ int main()
             UpdateAnimData(&nebulaData, deltaTime, 7);
         }
 
-        //nebula drawings
-        for (auto &nebulaData: nebulae)
+        for (Anim nebula: nebulae)
         {
-            DrawTextureRec(nebula, nebulaData.Rec, nebulaData.Pos, BLUE);
+            float pad = 50;
+
+            Rectangle nebRect = Rectangle{
+                    nebula.Pos.x + pad,
+                    nebula.Pos.y + pad,
+                    nebula.Rec.width - (2 * pad),
+                    nebula.Rec.height - (2 * pad)
+            };
+
+            Rectangle scarfyRect = {
+                    scarfyData.Pos.x,
+                    scarfyData.Pos.y,
+                    scarfyData.Rec.width,
+                    scarfyData.Rec.height,
+            };
+
+            if (CheckCollisionRecs(nebRect, scarfyRect))
+            {
+                collision = true;
+            }
         }
 
-        DrawTextureRec(character, scarfyData.Rec, scarfyData.Pos, WHITE);
+        if (collision)
+        {
+            DrawText("Crashed !", window.width / 2 - 100, 20, 50, RED);
+        }
+        else if(scarfyData.Pos.x >= finishLine)
+        {
+            DrawText("You WON!", window.width / 2 - 100, 20, 50, RED);
+        }
+        else
+        {
+            //nebula drawings
+            for (auto &nebulaData: nebulae)
+            {
+                DrawTextureRec(nebula, nebulaData.Rec, nebulaData.Pos, BLUE);
+            }
+
+            DrawTextureRec(character, scarfyData.Rec, scarfyData.Pos, WHITE);
+        }
 
         EndDrawing();
     }
 
     UnloadTexture(character);
     UnloadTexture(nebula);
+    UnloadTexture(background);
+    UnloadTexture(midground);
+    UnloadTexture(foreground);
+
     CloseWindow();
 }
 
