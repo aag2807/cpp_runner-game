@@ -13,6 +13,8 @@ struct Anim
 
 bool IsScarfyOnTheGround(const Dimensions &window, const Anim &scarfyData);
 
+void UpdateAnimData(Anim *data, float deltaTime, int frameCount);
+
 int main()
 {
     const Dimensions window = CreateNewDimension(512, 380);
@@ -29,17 +31,8 @@ int main()
             0
     };
 
-    Anim nebulaData2 = Anim{
-            Rectangle{0.0, 0.0, static_cast<float>(nebula.width / 8), static_cast<float>(nebula.height / 8)},
-            Vector2{static_cast<float>(window.width + 1500), window.height - nebulaData.Rec.height},
-            0,
-            1.00 / 16.00,
-            0
-    };
-
     const int nebula_size = 5;
     Anim nebulae[nebula_size];
-
     for (int i = 0; i < nebula_size; i++)
     {
         int threshhold = 800 + (1000 * i);
@@ -105,32 +98,13 @@ int main()
 
         if (!isInAir)
         {
-            scarfyData.RunningTime += deltaTime;
-            if (scarfyData.RunningTime >= scarfyData.UpdateTime)
-            {
-                scarfyData.RunningTime = 0.00;
-                scarfyData.Rec.x = (scarfyData.Frame * scarfyData.Rec.width);
-                scarfyData.Frame++;
-                if (scarfyData.Frame > 5)
-                {
-                    scarfyData.Frame = 0;
-                }
-            }
+            UpdateAnimData(&scarfyData, deltaTime, 5);
         }
+
         //nebula animation update
-        for (int i = 0; i < nebula_size; i++)
+        for (auto &nebulaData: nebulae)
         {
-            nebulae[i].RunningTime += deltaTime;
-            if (nebulae[i].RunningTime > nebulae[i].UpdateTime)
-            {
-                nebulae[i].RunningTime = 0.00;
-                nebulae[i].Rec.x = (nebulae[i].Frame * nebulae[i].Rec.width);
-                nebulae[i].Frame++;
-                if (nebulae[i].Frame > 7)
-                {
-                    nebulae[i].Frame = 0;
-                }
-            }
+            UpdateAnimData(&nebulaData, deltaTime, 7);
         }
 
         //nebula drawings
@@ -155,7 +129,20 @@ bool IsScarfyOnTheGround(const Dimensions &window, const Anim &scarfyData)
 }
 
 
-
+void UpdateAnimData(Anim *data, float deltaTime, int frameCount)
+{
+    data->RunningTime += deltaTime;
+    if (data->RunningTime > data->UpdateTime)
+    {
+        data->RunningTime = 0.00;
+        data->Rec.x = (data->Frame * data->Rec.width);
+        data->Frame++;
+        if (data->Frame > frameCount)
+        {
+            data->Frame = 0;
+        }
+    }
+}
 
 
 
